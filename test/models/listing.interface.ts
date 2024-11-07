@@ -13,3 +13,8 @@ export interface IListing {
     superhost?: boolean;
     link?: string;
 } 
+
+export interface BookingDates {
+    checkIn: Date;
+    checkOut: Date;
+}

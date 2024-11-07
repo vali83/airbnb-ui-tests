@@ -80,6 +80,7 @@ class MapPageObjects extends Page {
                 const isHovered = await element.isDisplayed() && 
                                 await browser.execute((coords, targetElement) => {
                                     const elementAtPoint = document.elementFromPoint(coords.x, coords.y);
+                                    // return elementAtPoint === document.querySelector(`[data-element="${targetElement}"]`);
                                     return elementAtPoint === targetElement;
                                 }, { x, y }, await element.getElement());
                 

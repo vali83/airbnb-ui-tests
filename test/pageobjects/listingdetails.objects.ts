@@ -1,5 +1,6 @@
 
-import Page from "./page";
+import Page from "./page.ts";
+
 
 export class ListingDetailsPageObjects extends Page {
     
@@ -42,20 +43,24 @@ export class ListingDetailsPageObjects extends Page {
     public get amenitiesSectionElements() {
         return $$("//div[@data-section-id='AMENITIES_DEFAULT']//section/div/div[not(.//text()[contains(.,'What this place offers')])]");
     }
-
-  
+ 
     /**
      * Get the amenities section element for a given amenity
      * @param amenity - The amenity to get the section element for
      * @returns The amenities section element
      */
     public getAmenitiesSectionElement(amenity: string) : ChainablePromiseElement {
-        return $(`//div[@data-section-id='AMENITIES_DEFAULT']//section/div/div[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'),'${amenity}')]`);
+        return $(`//div[@data-section-id='AMENITIES_DEFAULT']//section/div/div[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'),'${amenity.toLowerCase()}')]`);
     }
 
     public async waitForAmenityToLoad(amenity: string) {
         const amenitiesSectionElement = await this.getAmenitiesSectionElement(amenity);
         await amenitiesSectionElement.waitForDisplayed({ timeout: 3000 });
+    }
+
+
+    public async selectAmenities(amenities: string[]){
+        await Promise.all(amenities.map(async (amenity) => await this.waitForAmenityToLoad(amenity)));
     }
 
     public async isAmenityPresent(amenity: string) : Promise<boolean> {
@@ -80,12 +85,10 @@ export class ListingDetailsPageObjects extends Page {
         return $$("//div[@role='dialog'][@aria-label='What this place offers']//li");
     }
 
-    public getAmenitiesPopupElement(amenity: string) : ChainablePromiseElement {
-        const amenitiesList = this.amenitiesPopupElements;
-        return amenitiesList.find(element => element.getText().then(text => text.includes(amenity)));
+    public async getAmenitiesPopupElement(amenity: string) : Promise<ChainablePromiseElement>    {
+        const amenitiesList = await this.amenitiesPopupElements;
+        return amenitiesList.find(async (element) => await element.getText().then((text: string) => text.includes(amenity)));
     }
-
-
 
     /**
      * Wait for the listing top area busy elements to disappear
@@ -94,9 +97,9 @@ export class ListingDetailsPageObjects extends Page {
      */
     public async waitForListingTopAreaBusyToDisappear() {
         // get the list of all the busy elements
-        const busyElements : ChainablePromiseElement = await this.listingTopAreaBusyElements;
+        const busyElements = await this.listingTopAreaBusyElements;
         // wait for all the busy elements to disappear
-        for (const busyElement of busyElements) {
+        for await (const busyElement of await busyElements) {
             await busyElement.waitForDisplayed({ timeout: 10000, timeoutMsg: "Listing top area busy elements not displayed" });
         }
     }
@@ -131,13 +134,11 @@ export class ListingDetailsPageObjects extends Page {
 
     async waitForAmenitiesPopupToLoad() {
         const popup = await this.amenitiesPopup;
-        const elements: ChainablePromiseArray = await popup.$$('*'); 
+        const elements  = await popup.$$('*'); 
         
         // Wait for all interactive elements
         await browser.waitUntil(async () => {
-            const allDisplayed = await Promise.all(
-                elements.map(async (el: ChainablePromiseElement) => await el.isClickable())
-            );
+            const allDisplayed = await elements.map(async (el: ChainablePromiseElement) => await el.isClickable())
             return allDisplayed.every((displayed: boolean) => displayed === true);
         }, {
             timeout: 10000,

@@ -23,13 +23,11 @@ class AdvancedSearchPageObjects extends Page {
      */
     async waitForPopupToLoad() {
         const popup = await this.filtersDialog;
-        const elements: ChainablePromiseArray = await popup.$$('*'); 
+        const elements = await popup.$$('*'); 
         
         // Wait for all interactive elements
         await browser.waitUntil(async () => {
-            const allDisplayed = await Promise.all(
-                elements.map(async (el: ChainablePromiseElement) => await el.isClickable())
-            );
+            const allDisplayed = await elements.map(async (el) => await el.isClickable());
             return allDisplayed.every((displayed: boolean) => displayed === true);
         }, {
             timeout: 10000,
@@ -113,7 +111,7 @@ class AdvancedSearchPageObjects extends Page {
         // return $$("//section[@aria-labelledby='filter-section-heading-id-FILTER_SECTION_CONTAINER:MORE_FILTERS_AMENITIES_WITH_SUBCATEGORIES']//button[starts-with(@id,'filter-item-amenities-')]");
         return $$("//button[starts-with(@id,'filter-item-amenities-')]");
     }
-    public async getAmenitiesElements(): Promise<ChainablePromiseArray> {
+    public async getAmenitiesElements() {
         return await this.amenitiesElements;
     }
 
@@ -123,7 +121,7 @@ class AdvancedSearchPageObjects extends Page {
      */
     public async waitForAmenityToBeSelected(amenityName: string){
         const xpath = `[@aria-pressed='true'][contains(.,'${amenityName}')]`;
-        const element : ChainablePromiseElement = await this.amenitiesElements.map(element => element.$(xpath));
+        const element = await this.amenitiesElements.map(element => element.$(xpath)) as unknown as ChainablePromiseElement;
         await element.waitForClickable({ timeout: 3000 });
     }
 
@@ -163,7 +161,7 @@ class AdvancedSearchPageObjects extends Page {
      * @param amenityName - The name of the amenity to click on
      */
     public async clickAmenitiesElement(amenityName: string){
-        const element: ChainablePromiseElement = await this.amenitiesElement(amenityName);
+        const element = await this.amenitiesElement(amenityName);
         await element.waitForClickable();
         await element.click();
     }

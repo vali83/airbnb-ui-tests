@@ -14,8 +14,8 @@ class ResultsPageObjects extends Page {
 
     public getListingElementByTitle(title: string) {
         return this.listingCardsElements.find(async (listing) => {
-            const titleElement : ChainablePromiseElement = await listing.$("//div[starts-with(@id,'title_')]");
-            const cardTitle = await this.safeGetText(titleElement);
+            const titleElement  = await listing.$("//div[starts-with(@id,'title_')]");
+            const cardTitle = await this.safeGetText(titleElement as unknown as ChainablePromiseElement);
             return cardTitle === title;
         });
     }
@@ -24,17 +24,17 @@ class ResultsPageObjects extends Page {
         const property: IListing = {};
         try {
 
-            const titleElement : ChainablePromiseElement = await listingCardElement.$("//div[starts-with(@id,'title_')]");
-            const descriptionElement : ChainablePromiseElement = await listingCardElement.$("//div[starts-with(@id,'title_')]/following-sibling::*[1][name()='div']/span");
-            const bedsElement : ChainablePromiseElement = await listingCardElement.$("//div[starts-with(@id,'title_')]/following-sibling::div//span[contains(text(),'bed')]");
-            const bedroomsElement : ChainablePromiseElement = await listingCardElement.$("//div[starts-with(@id,'title_')]/following-sibling::div//span[contains(text(),'bedroom')]");
-            const pricePerNightElement : ChainablePromiseElement = await listingCardElement.$("//div[starts-with(@id,'title_')]/following-sibling::div//span[contains(text(),'per night')]");
+            const titleElement  = await listingCardElement.$("//div[starts-with(@id,'title_')]");
+            const descriptionElement  = await listingCardElement.$("//div[starts-with(@id,'title_')]/following-sibling::*[1][name()='div']/span");
+            const bedsElement  = await listingCardElement.$("//div[starts-with(@id,'title_')]/following-sibling::div//span[contains(text(),'bed')]");
+            const bedroomsElement  = await listingCardElement.$("//div[starts-with(@id,'title_')]/following-sibling::div//span[contains(text(),'bedroom')]");
+            const pricePerNightElement  = await listingCardElement.$("//div[starts-with(@id,'title_')]/following-sibling::div//span[contains(text(),'per night')]");
 
-            property.title = await this.safeGetText(titleElement);
-            property.description = await this.safeGetText(descriptionElement);
-            property.beds = await this.safeGetNumber(bedsElement);
-            property.bedrooms = await this.safeGetNumber(bedroomsElement);
-            const pricePerNightText = await this.safeGetText(pricePerNightElement);
+            property.title = await this.safeGetText(titleElement as unknown as ChainablePromiseElement);
+            property.description = await this.safeGetText(descriptionElement as unknown as ChainablePromiseElement);
+            property.beds = await this.safeGetNumber(bedsElement as unknown as ChainablePromiseElement);
+            property.bedrooms = await this.safeGetNumber(bedroomsElement as unknown as ChainablePromiseElement);
+            const pricePerNightText = await this.safeGetText(pricePerNightElement as unknown as ChainablePromiseElement);
             if (pricePerNightText) {
                 property.pricePerNight = StringParser.extractPrice(pricePerNightText);
             }
@@ -98,7 +98,7 @@ class ResultsPageObjects extends Page {
 
     public async getListingTitlesTexts() {
         const elements = await this.listingTitlesElements;
-        const texts = await Promise.all(elements.map(async (listingTitleElement: ChainablePromiseElement) => {
+        const texts = await Promise.all(elements.map(async (listingTitleElement) => {
             return await listingTitleElement.getText();
         }));
         return texts;
@@ -106,7 +106,7 @@ class ResultsPageObjects extends Page {
 
     public async getListingDescriptionsTexts() {
         const elements = await this.listingDescriptionsElements;
-        const texts = await Promise.all(elements.map(async (listingDescriptionElement: ChainablePromiseElement) => {
+        const texts = await Promise.all(elements.map(async (listingDescriptionElement) => {
             return await listingDescriptionElement.getText();
         }));
         return texts;
@@ -164,12 +164,15 @@ class ResultsPageObjects extends Page {
     }
 
     public async clickListingCard(title: string) {
-        const listingCard : ChainablePromiseElement = await this.listingCardsElements.find(async (card) => {
-            const titleElement : ChainablePromiseElement = await card.$("//div[starts-with(@id,'title_')]");
-            const cardTitle = await this.safeGetText(titleElement);
-            return cardTitle === title;
-        });
-        await listingCard.click();
+        const listingCards  = await this.listingCardsElements.map(card  => card);
+        for (const listingCard of listingCards) {
+            const titleElement  = await listingCard.$("//div[starts-with(@id,'title_')]");
+            const cardTitle = await this.safeGetText(titleElement as unknown as ChainablePromiseElement);
+            if (cardTitle === title) {
+                await listingCard.click();
+                break;
+            }
+        }
     }
 }
 

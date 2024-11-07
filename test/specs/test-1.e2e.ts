@@ -7,10 +7,10 @@ import ListingDetailsPageObjects from '../pageobjects/listingdetails.objects.js'
 import { StringParser } from '../utils/string-parser.js';
 import { IListing } from '../models/listing.interface.js';
 import MapPageObjects from '../pageobjects/homepage/searchresults/map.objects.js';
-interface BookingDates {
-    checkIn: Date;
-    checkOut: Date;
-}
+import { ChainablePromiseElement } from 'webdriverio';
+import { browser } from '@wdio/globals';
+import { BookingDates } from '../models/listing.interface.js';
+
 
 const calculateBookingDates = (): BookingDates => {
     const currentDate = new Date();
@@ -39,24 +39,7 @@ async function switchToNewTab(originalHandle: string) {
     }
 }
 
-const testCases = [
-    {
-        homePageUrl: "https://www.airbnb.com/",
-        location: "Rome, Italy",
-        bookingDates: calculateBookingDates(),
-        guests: {
-            numberOfAdults: 2,
-            numberOfChildren: 1,
-            numberOfInfants: 0,
-            numberOfPets: 0
-        },
-        advancedFilters: {
-            amenities: ['Pool'],
-            bedrooms: 5,
-        }
-    },
-    // Add more test cases here if needed
-];
+
 
 // Helper function to calculate minimum required beds
 const calculateMinBeds = (adults: number, children: number): number => {
@@ -65,9 +48,35 @@ const calculateMinBeds = (adults: number, children: number): number => {
     return adultBeds + childrenBeds;
 };
 
-let listings: IListing[] = [];
-let listingsAdvancedSearch: IListing[] = [];
+
 describe('AirBnb Home Page:', () => {
+    let listings: IListing[] = [];
+    let listingsAdvancedSearch: IListing[] = [];
+    let testData;
+
+    const testCases = [
+        {
+            homePageUrl: "https://www.airbnb.com/",
+            location: "Rome, Italy",
+            bookingDates: calculateBookingDates(),
+            guests: {
+                numberOfAdults: 2,
+                numberOfChildren: 1,
+                numberOfInfants: 0,
+                numberOfPets: 0
+            },
+            advancedFilters: {
+                amenities: ['Pool'],
+                bedrooms: 5,
+            }
+        },
+    ];
+
+    before(async () => {
+
+
+    });
+
     testCases.forEach(testData => {
         it('Test 1: Verify that the results match the search criteria', async () => {
             // ARRANGE
@@ -77,7 +86,7 @@ describe('AirBnb Home Page:', () => {
 
             // ACT
             // 1. Setup initial state
-            await LocationObjects.open(testData.homePageUrl);
+            await browser.url(testData.homePageUrl);
             
             // 2. Set location
             await LocationObjects.setLocation(location);
@@ -213,7 +222,7 @@ describe('AirBnb Home Page:', () => {
 
             // ACT
             // 1. Setup initial state
-            await LocationObjects.open(testData.homePageUrl);
+            await browser.url(testData.homePageUrl);
             
             // 2. Set location
             await LocationObjects.setLocation(location);
@@ -239,15 +248,15 @@ describe('AirBnb Home Page:', () => {
             await expect(await ResultsPageObjects.getReservationGuestsText()).toBe(`${totalGuests} guests`);
 
             // 2. Verify search results
-            listings = await ResultsPageObjects.getListings();  
+            listings = await ResultsPageObjects.getListings(); 
             console.log("---------------> listings: ", listings);
 
             const targetListing : IListing = listings[0];
             const mapPinElement = await MapPageObjects.getMapPinElementByListingTextAndPrice(targetListing.title!, targetListing.pricePerNight!);
             const listingElement = await ResultsPageObjects.getListingElementByTitle(targetListing.title!);
-            await expect(await MapPageObjects.checkStyleChangeOnHover(listingElement, mapPinElement)).toBeTruthy();
+            await expect(await MapPageObjects.checkStyleChangeOnHover(listingElement as unknown as ChainablePromiseElement, mapPinElement as unknown as ChainablePromiseElement)).toBeTruthy();
 
-            await MapPageObjects.clickPartiallyVisiblePin(mapPinElement);
+            await MapPageObjects.clickPartiallyVisiblePin(mapPinElement as unknown as ChainablePromiseElement);
             await MapPageObjects.waitForMapPinElementTitleToLoad(targetListing.title!, targetListing.pricePerNight!);
 
             const listingDetails = await MapPageObjects.extractListingData();
