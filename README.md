@@ -17,10 +17,14 @@ This project contains automated UI tests for Airbnb's search functionality using
 
 
 ## Run the tests
-
-1. Run `npx wdio run wdio.conf.ts --spec test-1.e2e.ts` to run the tests
-2. Run `npx allure generate --clean` to generate the allure report
-3. Run `npx allure open` to open the allure report in your default browser
+Run `npx wdio run wdio.conf.ts --spec test-1.e2e.ts` to run the tests
+   
+## Generate the allure report
+1. Install allure reporter `npm install @wdio/allure-reporter --save-dev` 
+2. Install allure-commandline `npm install -g allure-commandline`
+3. Run `npx allure generate allure-results --clean` to generate the allure report
+4. Open Allure reports: `npx allure open` or by server `npx allure serve allure-results`
+5. Run `npx allure open` to open the allure report in your default browser
 
 
 ## Notes
