@@ -1,6 +1,5 @@
 import { browser } from '@wdio/globals'
-import { $ } from '@wdio/globals';
-import { $$ } from '@wdio/globals';
+
 
 /**
 * main page object containing all methods, selectors and functionality
@@ -65,7 +64,4 @@ export default class Page {
             return false;
         }
     }
-
-    
-
 }

@@ -1,4 +1,4 @@
-import Page from '../../../page';
+import Page from '../../page.js';
 import { $ } from '@wdio/globals';
 import { $$ } from '@wdio/globals';
 import { StringParser } from '../../../utils/string-parser.js';

@@ -25,7 +25,8 @@ class LocationPageObjects extends Page {
         // wait for the location suggestions to be visible for max 3 seconds 
         // to cover for low network speed or processes that might delay the suggestions
         await this.locationSuggestionsContainer.waitForDisplayed({timeout: 10000, timeoutMsg: "Location suggestions container not displayed"});
-
+        // wait for the list loader to dissapear
+        await this.locationSuggestionListLoader.waitForExist({timeout: 10000, reverse: true, timeoutMsg: "Location suggestions list loader still displayed"});
         // select the suggested location by its string value in the location suggestions list
         await this.selectSuggestedLocationByString(location);   
     }
@@ -46,6 +47,9 @@ class LocationPageObjects extends Page {
         return $("//div[.='Where']");
     }
 
+    public get locationSuggestionListLoader(){
+        return $("//div[@id='bigsearch-query-location-listbox']//span/span");
+    }
 
     /**
      * @param {string} location
@@ -61,9 +65,8 @@ class LocationPageObjects extends Page {
 
     const suggestedLocations  = await this.locationSuggestions.map(async (locationElement) => await locationElement);
        for (const locationElement of suggestedLocations) {
-        console.log("locationElement.getText(): ", await locationElement.getText());
         if (await locationElement.getText() === location) {
-            console.log("Location Element getText matched: ", await locationElement.getText());
+
             await locationElement.waitForDisplayed();
             await locationElement.waitForClickable();
             await locationElement.click();

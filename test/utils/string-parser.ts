@@ -38,4 +38,18 @@ export class StringParser {
         const getFirstPart = (text: string): string => text.split(',')[0].trim();
         return getFirstPart(text);
     }
+
+    static extractPrice(priceText: string): number {
+        // Remove &nbsp; with regular space
+        const cleanText = priceText.replace(/\u00A0/g, ' ');
+        
+        // Match the first number in the string
+        const match = cleanText.match(/(\d+)/);
+        
+        if (match) {
+            return parseInt(match[1]);
+        }
+        
+        throw new Error(`Could not extract price from text: ${priceText}`);
+    }
 } 

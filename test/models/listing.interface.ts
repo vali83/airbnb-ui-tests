@@ -4,7 +4,9 @@ export interface IListing {
     beds?: number;
     bedrooms?: number;
     bathrooms?: string;
-    price?: string;
+    guests?: number;
+    pricePerNight?: number;
+    priceTotal?: number;
     location?: string;
     rating?: string;
     reviewCount?: string;

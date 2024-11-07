@@ -1,6 +1,7 @@
 import Page from '../../page.js';
 import { IListing } from '../../../models/listing.interface.js';
-import { StringParser } from '../../../utils/string-parser';
+import { StringParser } from '../../../utils/string-parser.js';
+
 class ResultsPageObjects extends Page {
     public get resultsContainer(){
         return $("//div[@id='site-content']");
@@ -11,20 +12,32 @@ class ResultsPageObjects extends Page {
         return $$("//div[@id='site-content']//div[@itemprop='itemListElement']");
     }
 
+    public getListingElementByTitle(title: string) {
+        return this.listingCardsElements.find(async (listing) => {
+            const titleElement : ChainablePromiseElement = await listing.$("//div[starts-with(@id,'title_')]");
+            const cardTitle = await this.safeGetText(titleElement);
+            return cardTitle === title;
+        });
+    }
+
     public async extractListingData(listingCardElement: WebdriverIO.Element): Promise<IListing> {
         const property: IListing = {};
         try {
-            console.log("---------------> listingCardElement: ", await listingCardElement.getText());
+
             const titleElement : ChainablePromiseElement = await listingCardElement.$("//div[starts-with(@id,'title_')]");
             const descriptionElement : ChainablePromiseElement = await listingCardElement.$("//div[starts-with(@id,'title_')]/following-sibling::*[1][name()='div']/span");
             const bedsElement : ChainablePromiseElement = await listingCardElement.$("//div[starts-with(@id,'title_')]/following-sibling::div//span[contains(text(),'bed')]");
             const bedroomsElement : ChainablePromiseElement = await listingCardElement.$("//div[starts-with(@id,'title_')]/following-sibling::div//span[contains(text(),'bedroom')]");
+            const pricePerNightElement : ChainablePromiseElement = await listingCardElement.$("//div[starts-with(@id,'title_')]/following-sibling::div//span[contains(text(),'per night')]");
 
             property.title = await this.safeGetText(titleElement);
             property.description = await this.safeGetText(descriptionElement);
             property.beds = await this.safeGetNumber(bedsElement);
             property.bedrooms = await this.safeGetNumber(bedroomsElement);
-            console.log("---------------> property inside extraction: ", property);
+            const pricePerNightText = await this.safeGetText(pricePerNightElement);
+            if (pricePerNightText) {
+                property.pricePerNight = StringParser.extractPrice(pricePerNightText);
+            }
         } catch (error) {
             console.error("Error extracting listing data", error);
         }
@@ -61,7 +74,6 @@ class ResultsPageObjects extends Page {
                 
                 // Extract data for this specific card
                 const propertyData = await this.extractListingData(listing);
-                console.log("---------------> propertyData: ", propertyData);
                 properties.push(propertyData);
                 
                 // Only add properties that have at least some data
@@ -120,7 +132,7 @@ class ResultsPageObjects extends Page {
 
     public async waitForLoadingOverlayToDisappear() {
 
-        await this.loadingOverlayElement.waitForDisplayed({timeout: 10000, timeoutMsg: "Loading overlay not displayed"});
+        await this.loadingOverlayElement.waitForDisplayed({timeout: 1000, timeoutMsg: "Loading overlay not displayed"});
         await this.loadingOverlayElement.waitForExist({timeout: 10000, reverse: true, timeoutMsg: "Loading overlay still exists"});
     }
 
@@ -149,6 +161,15 @@ class ResultsPageObjects extends Page {
     public async getReservationGuestsText() {
         const element = await this.reservationGuestsElement;
         return await element.getText();
+    }
+
+    public async clickListingCard(title: string) {
+        const listingCard : ChainablePromiseElement = await this.listingCardsElements.find(async (card) => {
+            const titleElement : ChainablePromiseElement = await card.$("//div[starts-with(@id,'title_')]");
+            const cardTitle = await this.safeGetText(titleElement);
+            return cardTitle === title;
+        });
+        await listingCard.click();
     }
 }
 
