@@ -22,4 +22,7 @@ bash
 
 ## Setup
 
-1. Clone the repository: 
+1. Clone the repository:
+2. Install dependencies: `npm install`
+3. Run the tests: `clear; npx wdio run wdio.conf.ts --spec test-1.e2e.ts`
+4. 

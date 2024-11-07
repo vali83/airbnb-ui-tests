@@ -7,21 +7,9 @@ import ListingDetailsPageObjects from '../pageobjects/listingdetails.objects.js'
 import { StringParser } from '../utils/string-parser.js';
 import { IListing } from '../models/listing.interface.js';
 import MapPageObjects from '../pageobjects/homepage/searchresults/map.objects.js';
-interface BookingDates {
-    checkIn: Date;
-    checkOut: Date;
-}
+import { TestDataManager } from '../data/TestDataManager.js';
 
-const calculateBookingDates = (): BookingDates => {
-    const currentDate = new Date();
-    const checkIn = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const checkOut = new Date(checkIn.getTime() + 7 * 24 * 60 * 60 * 1000);
-    
-    return {
-        checkIn,
-        checkOut
-    };
-};
+
 
 async function switchToNewTab(originalHandle: string) {
     await browser.waitUntil(async () => {
@@ -40,21 +28,7 @@ async function switchToNewTab(originalHandle: string) {
 }
 
 const testCases = [
-    {
-        homePageUrl: "https://www.airbnb.com/",
-        location: "Rome, Italy",
-        bookingDates: calculateBookingDates(),
-        guests: {
-            numberOfAdults: 2,
-            numberOfChildren: 1,
-            numberOfInfants: 0,
-            numberOfPets: 0
-        },
-        advancedFilters: {
-            amenities: ['Pool'],
-            bedrooms: 5,
-        }
-    },
+    TestDataManager.getTestData(),
     // Add more test cases here if needed
 ];
 
@@ -77,19 +51,17 @@ describe('AirBnb Home Page:', () => {
 
             // ACT
             // 1. Setup initial state
-            await LocationObjects.open(testData.homePageUrl);
+            await LocationObjects.openHomePage();
             
             // 2. Set location
-            await LocationObjects.setLocation(location);
+            await LocationObjects.setLocationFromTestData();
             
             // 3. Set dates
-            await CalendarObjects.selectDate(bookingDates.checkIn);
-            await CalendarObjects.selectDate(bookingDates.checkOut);
+            await CalendarObjects.setCheckinDateFromTestData();
+            await CalendarObjects.setCheckoutDateFromTestData();
             
             // 4. Set guests
-            await GuestsPageObjects.clickGuestsWhoButton();
-            await GuestsPageObjects.setGuestsChildrenInputValue(guests.numberOfChildren);
-            await GuestsPageObjects.setGuestsAdultsInputValue(guests.numberOfAdults);
+            await GuestsPageObjects.setGuestsFromTestData();
             
             // 5. Perform search
             await GuestsPageObjects.search();
@@ -124,31 +96,32 @@ describe('AirBnb Home Page:', () => {
 
             // ACT
             // 1. Open advanced filters
-            await AdvancedSearchPageObjects.clickAdvancedFiltersButton();
-            await AdvancedSearchPageObjects.waitForFiltersDialogToOpen();
-            await AdvancedSearchPageObjects.waitForAdvancedFiltersPopupElements();
+            await AdvancedSearchPageObjects.openAdvancedFiltersPopup();
             
             // 2. Set bedrooms
-    await AdvancedSearchPageObjects.setBedroomsInputValue(testData.advancedFilters.bedrooms);
+            await AdvancedSearchPageObjects.setBedroomsFromTestData();
             
             // 3. Set amenities
+            // await AdvancedSearchPageObjects.setAmenitiesFromTestData();
             const amenitiesList = await AdvancedSearchPageObjects.getAmenitiesElements();
             console.log("---------------> amenitiesList: ", amenitiesList);
-            const amenitiesPresent = testData.advancedFilters.amenities.every(async (amenity) => {
+            const amenitiesPresent = testData?.advancedFilters?.amenities?.every(async (amenity) => {
                 return await AdvancedSearchPageObjects.isAmenitiesElementPresent(amenity,3000);
             });
             if (!amenitiesPresent) {
                 await AdvancedSearchPageObjects.clickShowMoreAmenitiesLink();
                 await AdvancedSearchPageObjects.waitForShowMoreAmenitiesLinkToDisappear();
             }
-            testData.advancedFilters.amenities.forEach(async (amenity) => {
-                await AdvancedSearchPageObjects.clickAmenitiesElement(amenity);
-                // await AdvancedSearchPageObjects.waitForAmenityToBeSelected(amenity);
-            });
+            if (testData?.advancedFilters?.amenities) {
+                for (const amenity of testData.advancedFilters.amenities) {
+                    await AdvancedSearchPageObjects.clickAmenitiesElement(amenity);
+                    // await AdvancedSearchPageObjects.waitForAmenityToBeSelected(amenity);
+                }
+            }
+
+             // 4. Perform search
             await AdvancedSearchPageObjects.clickShowPlacesButton();
             await AdvancedSearchPageObjects.waitForFiltersDialogToClose();
-
-            // 4. Perform search
             // await ResultsPageObjects.waitForLoadingOverlayToDisappear();
             await ResultsPageObjects.waitForListingsToLoad();
 
@@ -162,10 +135,16 @@ describe('AirBnb Home Page:', () => {
                 if (listing.bedrooms === undefined ) {
                     console.warn('Bedrooms are undefined for listing:', listing.title);
                 } else {
-                    expect(listing.bedrooms).toBeGreaterThanOrEqual(testData.advancedFilters.bedrooms);
+                    if (testData.advancedFilters && testData.advancedFilters.bedrooms !== undefined) {
+                        expect(listing.bedrooms).toBeGreaterThanOrEqual(testData.advancedFilters.bedrooms);
+                    } else {
+                        console.error('testData.advancedFilters.bedrooms is undefined');
+                    }
                 }
             });
+
             const targetListing : IListing = listingsAdvancedSearch[0];
+
             await ResultsPageObjects.clickListingCard(targetListing.title!);
             await browser.pause(3000);
             
@@ -183,23 +162,33 @@ describe('AirBnb Home Page:', () => {
             }
 
          // wait for amenities to load
-         testData.advancedFilters.amenities.forEach(async (amenity) => {
-            await ListingDetailsPageObjects.waitForAmenityToLoad(amenity);
-         });
+        //  await ListingDetailsPageObjects.waitForAmenitiesToLoad();
+        if (testData.advancedFilters && testData.advancedFilters.amenities) {
+            for (const amenity of testData.advancedFilters.amenities) {
+                await ListingDetailsPageObjects.waitForAmenityToLoad(amenity);
+            }
+        }
+
 
          // if amenity is not present, open the show all amenities section
-         testData.advancedFilters.amenities.forEach(async (amenity) => {
-            if (!(await ListingDetailsPageObjects.isAmenityPresent(amenity))) {
-                await ListingDetailsPageObjects.clickShowAllAmenitiesLink();
-                await ListingDetailsPageObjects.waitForAmenitiesPopupToLoad();
+        //  await ListingDetailsPageObjects.selectAmenitiesFromTestData();
+         // check if the selected amenities are present / clickable
+         if (testData.advancedFilters?.amenities) {
+            for (const amenity of testData.advancedFilters.amenities) {
+               await expect(await ListingDetailsPageObjects.isAmenityPresent(amenity)).toBeTruthy();
             }
-         });
-        
-         // check if the selected amenities are  present / clickable
-         testData.advancedFilters.amenities.forEach(async (amenity) => {
+         }
+        // await expect(await ListingDetailsPageObjects.checkAmenitiesFromTestDataSelected()).toBeTruthy();    
+                  
+        // check if the selected amenities are present / clickable
+        if (testData.advancedFilters?.amenities) {
+        for (const amenity of testData.advancedFilters.amenities) {
             await expect(await ListingDetailsPageObjects.isAmenityPresent(amenity)).toBeTruthy();
-         });
-            
+        }
+        } else {
+            console.error('testData.advancedFilters.amenities is undefined');
+        }
+
 
             await browser.closeWindow();
             await browser.switchToWindow(originalHandle);
@@ -213,19 +202,17 @@ describe('AirBnb Home Page:', () => {
 
             // ACT
             // 1. Setup initial state
-            await LocationObjects.open(testData.homePageUrl);
+            await LocationObjects.openHomePage();
             
             // 2. Set location
-            await LocationObjects.setLocation(location);
+            await LocationObjects.setLocationFromTestData();
             
             // 3. Set dates
-            await CalendarObjects.selectDate(bookingDates.checkIn);
-            await CalendarObjects.selectDate(bookingDates.checkOut);
+            await CalendarObjects.setCheckinDateFromTestData();
+            await CalendarObjects.setCheckoutDateFromTestData();
             
             // 4. Set guests
-            await GuestsPageObjects.clickGuestsWhoButton();
-            await GuestsPageObjects.setGuestsChildrenInputValue(guests.numberOfChildren);
-            await GuestsPageObjects.setGuestsAdultsInputValue(guests.numberOfAdults);
+            await GuestsPageObjects.setGuestsFromTestData();
             
             // 5. Perform search
             await GuestsPageObjects.search();

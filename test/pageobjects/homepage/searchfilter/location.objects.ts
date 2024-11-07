@@ -1,13 +1,21 @@
 import Page from '../../page.js';
-
+import { TestDataManager } from 'data/TestDataManager.ts';
+import { BookingDates } from "../../../models/listing.interface.ts";
 
 class LocationPageObjects extends Page {
+
+  
+    
+    private locationInputSelector : string = "form[role='search'] label[for='bigsearch-query-location-input'] input#bigsearch-query-location-input";
+    private locationSuggestionsContainerSelector : string = "form[role='search'] div[role='listbox']";
+    private locationSuggestionsSelector : string = "form[role='search'] div[role='listbox'] div[role='option']";
+
     /**
      * @returns {Element}
      * Textbox for entering the location string
      */
     public get locationInput() {
-        return $("form[role='search'] label[for='bigsearch-query-location-input'] input#bigsearch-query-location-input");
+        return $(this.locationInputSelector);
     }
 
     /**
@@ -31,16 +39,19 @@ class LocationPageObjects extends Page {
         await this.selectSuggestedLocationByString(location);   
     }
 
+    public async setLocationFromTestData() {
+        await this.setLocation(TestDataManager.getLocation());
+    }
 
     /*
      @returns {ElementArray}
      Container containing all the suggested options for the location entered
     */
     public get locationSuggestions() {
-        return $$("form[role='search'] div[role='listbox'] div[role='option']");
+        return $$(this.locationSuggestionsSelector);
     }
     public get locationSuggestionsContainer(){
-        return $("form[role='search'] div[role='listbox']");
+        return $(this.locationSuggestionsContainerSelector);
     }
 
     public get locationSuggestionsWhereText(){

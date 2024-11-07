@@ -1,5 +1,5 @@
 import { browser } from '@wdio/globals'
-
+import { TestDataManager } from '../data/TestDataManager';
 
 /**
 * main page object containing all methods, selectors and functionality
@@ -8,12 +8,18 @@ import { browser } from '@wdio/globals'
 export default class Page {
     /**
     * Opens a sub page of the page
-    * @param path path of the sub page (e.g. /path/to/page.html)
+    * @param path path of the page
     */
     public async open(path: string) {
         await browser.url(path);
     }
 
+    /**
+     * Opens the home page
+     */
+    public async openHomePage() {
+        await this.open(TestDataManager.getHomePageUrl());
+    }
   
 
     /**

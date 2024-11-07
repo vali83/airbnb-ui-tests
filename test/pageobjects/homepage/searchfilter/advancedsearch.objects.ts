@@ -1,5 +1,5 @@
 import Page from '../../page.js';
-
+import { TestDataManager } from '../../../data/TestDataManager.js';
 class AdvancedSearchPageObjects extends Page {
     public get advancedFiltersButton(){
         return $("//button[contains(.,'Filters')]");
@@ -16,6 +16,12 @@ class AdvancedSearchPageObjects extends Page {
             return allClickable.every((clickable: boolean) => clickable === true);
         }, { timeout, timeoutMsg: 'Popup elements not fully loaded after 10s' });
 
+    }
+
+    public async openAdvancedFiltersPopup() {
+        await this.clickAdvancedFiltersButton();
+        await this.waitForFiltersDialogToOpen();
+        await this.waitForAdvancedFiltersPopupElements();
     }
 
     /**
@@ -96,6 +102,12 @@ class AdvancedSearchPageObjects extends Page {
             currentIntValue = parseInt(currentValue.replace('+', ''));
         }
     }
+    public async setBedroomsFromTestData() {
+        const bedrooms = TestDataManager.getTestData().advancedFilters?.bedrooms;
+        if (bedrooms !== undefined) {
+            await this.setBedroomsInputValue(bedrooms);
+        }
+    }
 
     public get showMoreAmenitiesLink(){
         return $("//span[contains(.,'Show more')]");
@@ -117,6 +129,23 @@ class AdvancedSearchPageObjects extends Page {
         return await this.amenitiesElements;
     }
 
+
+    public async setAmenitiesFromTestData() {
+        const amenitiesList = await this.getAmenitiesElements();
+        const amenitiesPresent = (TestDataManager.getTestData().advancedFilters?.amenities || [])
+            .every(async (amenity) => {
+                return await this.isAmenitiesElementPresent(amenity, 3000);
+            });
+        if (!amenitiesPresent) {
+            await this.clickShowMoreAmenitiesLink();
+            await this.waitForShowMoreAmenitiesLinkToDisappear();
+        }
+        (TestDataManager.getTestData().advancedFilters?.amenities || []).forEach(async (amenity) => {
+            await this.clickAmenitiesElement(amenity);
+        });
+    }
+
+  
     /**
      * Wait for the amenity to be selected
      * @param amenityName - The name of the amenity to wait for
@@ -164,8 +193,8 @@ class AdvancedSearchPageObjects extends Page {
      */
     public async clickAmenitiesElement(amenityName: string){
         const element: ChainablePromiseElement = await this.amenitiesElement(amenityName);
-        await element.waitForClickable();
-        await element.click();
+        await element.waitForClickable({ timeout: 3000 });
+        await element.click({ force: true });
     }
 
     public async waitForFiltersDialogToClose(){

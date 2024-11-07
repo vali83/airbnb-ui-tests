@@ -1,4 +1,5 @@
 import Page from '../../page.js';
+import { TestDataManager } from '../../../data/TestDataManager.js';
 
 class GuestsPageObjects extends Page {
 
@@ -115,6 +116,21 @@ class GuestsPageObjects extends Page {
             await this.guestsChildrenDecreaseButton.click();
             currentValue = await this.getGuestsChildrenInputValue();
         }
+    }
+
+    public async setGuests(adults: number, children: number) {
+        await this.clickGuestsWhoButton();
+        await this.setGuestsAdultsInputValue(adults);
+        await this.setGuestsChildrenInputValue(children);
+
+        //TODO: Add infants and pets
+    }
+
+    public async setGuestsFromTestData() {
+        await this.setGuests(
+            TestDataManager.getTestData().guests.numberOfAdults,
+            TestDataManager.getTestData().guests.numberOfChildren
+        );
     }
 }
 

@@ -1,5 +1,6 @@
 
-import Page from "./page";
+import Page from "./page.ts";
+import { TestDataManager } from "../data/TestDataManager.ts";
 
 export class ListingDetailsPageObjects extends Page {
     
@@ -50,7 +51,7 @@ export class ListingDetailsPageObjects extends Page {
      * @returns The amenities section element
      */
     public getAmenitiesSectionElement(amenity: string) : ChainablePromiseElement {
-        return $(`//div[@data-section-id='AMENITIES_DEFAULT']//section/div/div[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'),'${amenity}')]`);
+        return $(`//div[@data-section-id='AMENITIES_DEFAULT']//section/div/div[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'),'${amenity.toLowerCase()}')]`);
     }
 
     public async waitForAmenityToLoad(amenity: string) {
@@ -58,9 +59,25 @@ export class ListingDetailsPageObjects extends Page {
         await amenitiesSectionElement.waitForDisplayed({ timeout: 3000 });
     }
 
+    public async selectAmenitiesFromTestData() {
+        const amenitiesSectionElements = TestDataManager.getTestData().advancedFilters?.amenities || [];
+        await Promise.all(amenitiesSectionElements.map(async (amenity) => await this.waitForAmenityToLoad(amenity)));
+    }
+
+    public async waitForAmenitiesToLoad() {
+        const amenitiesSectionElements = TestDataManager.getTestData().advancedFilters?.amenities || [];
+        await Promise.all(amenitiesSectionElements.map(async (amenity) => await this.waitForAmenityToLoad(amenity)));
+    }
+
     public async isAmenityPresent(amenity: string) : Promise<boolean> {
         const amenitiesSectionElement = await this.getAmenitiesSectionElement(amenity);
         return await amenitiesSectionElement.isDisplayed();
+    }
+
+    public async checkAmenitiesFromTestDataSelected() : Promise<boolean> {
+        const amenitiesSectionElements = TestDataManager.getTestData().advancedFilters?.amenities || [];
+        const results = await Promise.all(amenitiesSectionElements.map(async (amenity) => await this.isAmenityPresent(amenity)));
+        return results.every(result => result === true);
     }
     
     public get amenitiesSectionShowAllElement() : ChainablePromiseElement {

@@ -2,8 +2,21 @@ import Page from '../../page.js';
 import { $ } from '@wdio/globals';
 import { $$ } from '@wdio/globals';
 import { StringParser } from '../../../utils/string-parser.js';
+import { TestDataManager } from '../../../data/TestDataManager.ts';
+import { BookingDates } from "../../../models/listing.interface.ts";
+
 class CalendarObjects extends Page {
 
+    public calculateBookingDates = (): BookingDates => {
+        const currentDate = new Date();
+        const checkIn = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const checkOut = new Date(checkIn.getTime() + 7 * 24 * 60 * 60 * 1000);
+        
+        return {
+            checkIn,
+            checkOut
+        };
+    };
 
     /**
      * @returns {Element}
@@ -43,6 +56,18 @@ class CalendarObjects extends Page {
         await this.scrollToMonthYear(date);
         await this.clickOnMonthSelectableValueByDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
     }
+
+    public async setCheckinDateFromTestData() {
+        const bookingDates = this.calculateBookingDates();
+        await this.selectDate(bookingDates.checkIn);
+    }
+
+    public async setCheckoutDateFromTestData() {
+        const bookingDates = this.calculateBookingDates();
+        await this.selectDate(bookingDates.checkOut);
+    }
+
+
     /**
      * @param {number} year
      * @param {number} month
